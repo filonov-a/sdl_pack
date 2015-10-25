@@ -40,13 +40,13 @@ int main(int argc, char **argv) {
     hexDump("SRC After writing another 10 bytes", srcbuff, sizeof(srcbuff));
 
     debug("Try to open catalog\n");
-    PCK_Catalog *cat = PCK_OpenCatForRW("data/data.cat", NULL);
+    PCK_Catalog *cat = PCK_OpenCatForRW("data.cat", NULL);
     SDL_RWclose(rw2);
     SDL_RWclose(rw);
     debug("catalog opened %p\n", cat);
     PCK_CatalogItem *catItem = cat->items;
     while (catItem != NULL) {
-        debug("catItem(%p->%p) b=%ld s=%ld n=%s\n",
+        debug("catItem(%p->%p) begin=%ld size=%ld n=%s\n",
               catItem,
               catItem->next,
               catItem->begin,
