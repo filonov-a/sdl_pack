@@ -68,6 +68,6 @@ int main(int argc, char **argv) {
     SDL_DestroyWindow(win);
 
     SDL_Quit();
-
+    PCK_CloseCatalog(cat);
     return 0;
 }

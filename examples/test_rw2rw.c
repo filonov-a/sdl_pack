@@ -54,6 +54,6 @@ int main(int argc, char **argv) {
               catItem->name);
         catItem = catItem->next;
     }
-    PCK_FreeCatalog(cat);
+    PCK_CloseCatalog(cat);
     return 0;
 }

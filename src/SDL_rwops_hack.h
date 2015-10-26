@@ -15,6 +15,7 @@
     Sint64 current;\
     Sint64 end;\
     void *baseRW;\
+    void *data; \
     } rwops
 
 #include <SDL_rwops.h>

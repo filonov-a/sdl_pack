@@ -2,7 +2,6 @@
 #include <SDL_error.h>
 
 #define SDL_RWOPS_RW2RW 0x52573252
-
 #define  SDL_RW_TAG_CURRENT SDL_RWOPS_RW2RW
 
 

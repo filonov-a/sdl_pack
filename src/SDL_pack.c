@@ -48,6 +48,29 @@ PCK_Catalog *PCK_AllocCatalog() {
     return ptr;
 }
 
+static SDL_RWops *simple_OpenRW(PCK_Catalog *cat, const char *s) {
+    PCK_CatalogItem *item = PCK_FindItem(cat->items, s);
+    if (item == NULL || cat->context == NULL) {
+        return NULL;
+    }
+    return SDL_RWFromRW(cat->context, item->begin, item->size);
+}
+
+static void simple_Close(struct PCK_Catalog *cat) {
+    PCK_Catalog *next;
+    while (cat != NULL) {
+        next = cat->next;
+        if (cat->context != NULL) {
+            SDL_RWclose(cat->context);
+        }
+        PCK_FreeCatalogItem(cat->items);
+        SDL_free(cat);
+        cat = next;
+    }
+
+}
+
+
 PCK_Catalog *PCK_OpenCatForRW(const char *catName, SDL_RWops *context) {
     Sint64 first;
     Sint64 size;
@@ -63,6 +86,8 @@ PCK_Catalog *PCK_OpenCatForRW(const char *catName, SDL_RWops *context) {
     }
     currentPtr = &ptr->items;
     ptr->context = context;
+    ptr->openRW = simple_OpenRW;
+    ptr->close = simple_Close;
 
 #ifndef HAVE_STDIO_H
 #error  Catalogs without STDIO not implemented yet
@@ -70,7 +95,7 @@ PCK_Catalog *PCK_OpenCatForRW(const char *catName, SDL_RWops *context) {
 #define MAX_LINE_SIZE 1024
     FILE *f = fopen(catName, "rb");
     if (f == NULL) {
-        PCK_FreeCatalog(ptr);
+        PCK_CloseCatalog(ptr);
         return NULL;
     }
     char buffer[MAX_LINE_SIZE];
@@ -101,26 +126,19 @@ PCK_Catalog *PCK_OpenCatForRW(const char *catName, SDL_RWops *context) {
     return ptr;
 }
 
-void PCK_FreeCatalog(PCK_Catalog *cat) {
-    PCK_Catalog *next;
-    while (cat != NULL) {
-        next = cat->next;
-        if (cat->context != NULL) {
-            SDL_RWclose(cat->context);
-        }
-        PCK_FreeCatalogItem(cat->items);
-        SDL_free(cat);
-        cat = next;
+void PCK_CloseCatalog(struct  PCK_Catalog *cat) {
+    if(cat->next != NULL){
+        // Free Child first
+        (*cat->next->close)(cat->next);
     }
+    (*cat->close)(cat);
 }
 
-SDL_RWops *PCK_OpenRW(PCK_Catalog *cat, const char *s) {
-    PCK_CatalogItem *item = PCK_FindItem(cat->items, s);
-    if (item == NULL || cat->context == NULL) {
-        return NULL;
-    }
-    return SDL_RWFromRW(cat->context, item->begin, item->size);
+
+SDL_RWops *PCK_OpenRW(struct PCK_Catalog *cat, const char *s) {
+    return (*cat->openRW)(cat,s);
 }
+
 
 PCK_Catalog *PCK_OpenCatForFile(const char *catName, const char *packname) {
     SDL_RWops *rw = SDL_RWFromFile(packname, "rb");
